@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useBooksContext } from '../context/BooksContext';
 import BookForm from '../components/BookForm';
 import { PlusCircle } from 'lucide-react';
@@ -7,30 +7,26 @@ import { PlusCircle } from 'lucide-react';
 export default function CadastroPage() {
   const { adicionarLivro } = useBooksContext();
   const navigate = useNavigate();
-  
-  // Estado local para mensagem de feedback/sucesso antes de redirecionar
-  const [sucessoMsg, setSucessoMsg] = useState('');
 
   const handleSubmit = (dadosForm) => {
     const resultado = adicionarLivro(dadosForm);
     if (resultado.success) {
-      setSucessoMsg(`"${resultado.book.titulo}" adicionado com sucesso! Redirecionando...`);
-      // Redireciona de volta para a estante após 1.5s
-      setTimeout(() => {
-        setSucessoMsg('');
-        navigate('/estante');
-      }, 1500);
+      // Dispara o redirecionamento automático imediato de volta para a estante
+      navigate('/estante');
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto w-full py-6 space-y-6 animate-fadeIn">
-      {/* Alerta de Sucesso */}
-      {sucessoMsg && (
-        <div className="alert alert-success shadow-lg text-sm font-semibold py-3">
-          <span>{sucessoMsg}</span>
-        </div>
-      )}
+    <div className="max-w-2xl mx-auto w-full py-6 space-y-4 animate-fadeIn">
+      {/* Botão discreto no topo para voltar */}
+      <div className="flex justify-start">
+        <Link 
+          to="/estante" 
+          className="btn btn-ghost btn-sm text-gray-400 hover:text-white font-medium px-2 normal-case"
+        >
+          ← Voltar para a Estante
+        </Link>
+      </div>
 
       {/* Card do Formulário */}
       <div className="card bg-base-200 border border-base-300 rounded-3xl p-6 md:p-8 shadow-xl">

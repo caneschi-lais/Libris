@@ -30,20 +30,15 @@ export default function EstantePage() {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Cabeçalho da Estante */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Bookmark className="h-6 w-6 text-primary" /> Estante Literária
-          </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            Veja a listagem geral das suas obras, pesquise e filtre por categorias ou status de leitura.
-          </p>
-        </div>
+      <div className="flex justify-between items-center border-b border-base-300 pb-4">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-white flex items-center gap-2">
+          <Bookmark className="h-7 w-7 text-primary" /> Minha Estante
+        </h2>
         
         {/* Link para o formulário de cadastro */}
         <Link 
           to="/cadastro" 
-          className="btn btn-primary btn-sm md:btn-md font-bold shadow-md flex items-center gap-2 text-white"
+          className="btn btn-primary btn-sm md:btn-md font-bold shadow-md flex items-center gap-1.5 text-white"
         >
           <Plus className="h-4 w-4" /> Novo Livro
         </Link>
