@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   ResponsiveContainer, 
   PieChart, 
@@ -32,20 +32,60 @@ import {
  * @param {Array} props.books - A lista de livros cadastrados
  */
 export default function Dashboard({ books }) {
-  
-  // 1. Cálculos de Estatísticas Rápidas
+  const currentYear = new Date().getFullYear().toString();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  // Extrai os anos únicos presentes nos livros para preencher o dropdown
+  const uniqueYears = useMemo(() => {
+    const years = new Set();
+    years.add(currentYear);
+
+    books.forEach(b => {
+      if (b.data_termino && b.data_termino.length >= 4) {
+        const year = b.data_termino.substring(0, 4);
+        if (/^\d{4}$/.test(year)) years.add(year);
+      }
+      if (b.data_inicio && b.data_inicio.length >= 4) {
+        const year = b.data_inicio.substring(0, 4);
+        if (/^\d{4}$/.test(year)) years.add(year);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [books, currentYear]);
+
+  // 1. Cálculos de Estatísticas Rápidas baseadas no ano selecionado
   const stats = useMemo(() => {
-    const totalLivros = books.length;
+    // Filtro de livros para contar os livros ativos no ano selecionado
+    const booksActiveInYear = books.filter(b => {
+      if (selectedYear === 'todos') return true;
+      const termYear = b.data_termino ? b.data_termino.substring(0, 4) : null;
+      const initYear = b.data_inicio ? b.data_inicio.substring(0, 4) : null;
+      return termYear === selectedYear || initYear === selectedYear;
+    });
+
+    const totalLivros = booksActiveInYear.length;
     
-    // Contagem de livros marcados como "Lido"
-    const livrosLidos = books.filter(b => b.status_leitura === 'Lido').length;
+    // Contagem de livros marcados como "Lido" no ano selecionado
+    const livrosLidos = books.filter(b => {
+      if (b.status_leitura !== 'Lido') return false;
+      if (selectedYear === 'todos') return true;
+      return b.data_termino && b.data_termino.substring(0, 4) === selectedYear;
+    }).length;
     
-    // Total de páginas lidas (página_atual dos livros lendo + total_paginas de livros lidos)
+    // Total de páginas lidas do ano selecionado
     const totalPaginasLidas = books.reduce((acc, livro) => {
+      const termYear = livro.data_termino ? livro.data_termino.substring(0, 4) : null;
+      const initYear = livro.data_inicio ? livro.data_inicio.substring(0, 4) : null;
+
       if (livro.status_leitura === 'Lido') {
-        return acc + (livro.total_paginas || 0);
+        if (selectedYear === 'todos' || termYear === selectedYear) {
+          return acc + (livro.total_paginas || 0);
+        }
       } else if (livro.status_leitura === 'Lendo') {
-        return acc + (livro.pagina_atual || 0);
+        if (selectedYear === 'todos' || initYear === selectedYear) {
+          return acc + (livro.pagina_atual || 0);
+        }
       }
       return acc;
     }, 0);
@@ -55,20 +95,22 @@ export default function Dashboard({ books }) {
       livrosLidos,
       totalPaginasLidas
     };
-  }, [books]);
+  }, [books, selectedYear]);
 
-  // 2. Gráfico 1: Rosca de Distribuição de Posse (Tenho vs Quero)
+  // 2. Gráfico 1: Rosca de Distribuição de Posse (Físico vs Digital vs Quero) - Global
   const possessionData = useMemo(() => {
-    const tenho = books.filter(b => b.possui_o_livro).length;
+    const fisico = books.filter(b => b.possui_o_livro && b.formato !== 'Digital').length;
+    const digital = books.filter(b => b.possui_o_livro && b.formato === 'Digital').length;
     const quero = books.filter(b => !b.possui_o_livro).length;
 
     return [
-      { name: 'Possuo (Tenho)', value: tenho, color: '#6366f1' }, // Indigo
-      { name: 'Quero (Lista de Desejos)', value: quero, color: '#f59e0b' } // Amber
+      { name: 'Tenho Físico', value: fisico, color: '#6366f1' }, // Indigo
+      { name: 'Tenho Digital', value: digital, color: '#06b6d4' }, // Cyan
+      { name: 'Quero (Desejo)', value: quero, color: '#f59e0b' } // Amber
     ];
   }, [books]);
 
-  // 3. Gráfico 2: Itens por Tipo de Mídia
+  // 3. Gráfico 2: Itens por Tipo de Mídia - Global
   const mediaData = useMemo(() => {
     const counts = {
       Livro: 0,
@@ -91,7 +133,7 @@ export default function Dashboard({ books }) {
     ];
   }, [books]);
 
-  // 4. Gráfico 3: Leituras Concluídas por Mês em 2026 (Linha)
+  // 4. Gráfico 3: Leituras Concluídas por Mês (Linha)
   const monthlyData = useMemo(() => {
     // Inicialização dos 12 meses
     const meses = [
@@ -109,26 +151,56 @@ export default function Dashboard({ books }) {
       { name: 'Dez', leituras: 0, key: '12' }
     ];
 
-    // Filtra livros lidos que possuem data_termino no ano de 2026
+    // Filtra livros lidos que possuem data_termino no ano selecionado
     books.forEach(b => {
-      if (b.status_leitura === 'Lido' && b.data_termino && b.data_termino.startsWith('2026')) {
-        // Ex: data_termino no formato "2026-06-15"
-        const mesIndex = b.data_termino.substring(5, 7); // extrai "06"
-        const mesAlvo = meses.find(m => m.key === mesIndex);
-        if (mesAlvo) {
-          mesAlvo.leituras++;
+      if (b.status_leitura === 'Lido' && b.data_termino) {
+        const matchesYear = selectedYear === 'todos' || b.data_termino.startsWith(selectedYear);
+        if (matchesYear) {
+          // Ex: data_termino no formato "YYYY-MM-DD"
+          const mesIndex = b.data_termino.substring(5, 7); // extrai "MM"
+          const mesAlvo = meses.find(m => m.key === mesIndex);
+          if (mesAlvo) {
+            mesAlvo.leituras++;
+          }
         }
       }
     });
 
     return meses;
-  }, [books]);
+  }, [books, selectedYear]);
 
   // Checa se há livros cadastrados para exibir informações relevantes
   const hasBooks = books.length > 0;
 
   return (
     <div className="space-y-6">
+      
+      {/* Filtro de Ano */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-200 p-5 border border-base-300 rounded-3xl shadow-xl">
+        <div>
+          <h3 className="text-md font-bold text-white flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" /> Filtro de Ano
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Selecione o período de referência para as estatísticas rápidas e conclusões mensais.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <select
+            id="year-select"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="select select-bordered select-sm w-full sm:w-44 bg-base-100 text-sm focus:border-primary text-white font-medium"
+          >
+            <option value="todos">Todos os Anos</option>
+            {uniqueYears.map((year) => (
+              <option key={year} value={year}>
+                Ano de {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       
       {/* 1. Painel de Estatísticas Rápidas (DaisyUI Stats) */}
       <div className="stats stats-vertical lg:stats-horizontal w-full bg-base-200 border border-base-300 rounded-3xl shadow-xl">
@@ -140,7 +212,9 @@ export default function Dashboard({ books }) {
           </div>
           <div className="stat-title text-gray-400 font-semibold text-sm">Total de Livros</div>
           <div className="stat-value text-3xl font-extrabold text-white mt-1">{stats.totalLivros}</div>
-          <div className="stat-desc text-xs text-gray-500 mt-1">Registrados na sua estante</div>
+          <div className="stat-desc text-xs text-gray-500 mt-1">
+            {selectedYear === 'todos' ? 'Registrados na sua estante' : `Ativos em ${selectedYear}`}
+          </div>
         </div>
 
         {/* Livros Lidos */}
@@ -164,7 +238,9 @@ export default function Dashboard({ books }) {
           </div>
           <div className="stat-title text-gray-400 font-semibold text-sm">Páginas Lidas</div>
           <div className="stat-value text-3xl font-extrabold text-white mt-1">{stats.totalPaginasLidas}</div>
-          <div className="stat-desc text-xs text-gray-500 mt-1">Soma de Lidos + Lendo atualmente</div>
+          <div className="stat-desc text-xs text-gray-500 mt-1">
+            {selectedYear === 'todos' ? 'Soma de Lidos + Lendo atualmente' : `Lidos + Lendo em ${selectedYear}`}
+          </div>
         </div>
 
       </div>
@@ -191,7 +267,7 @@ export default function Dashboard({ books }) {
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h3 className="text-md font-bold text-white">Distribuição de Posse</h3>
-                <p className="text-2xs text-gray-400">Compara livros que possui vs desejados</p>
+                <p className="text-2xs text-gray-400">Físicos, Digitais e Desejados na Estante</p>
               </div>
               <ShoppingBag className="h-5 w-5 text-gray-400" />
             </div>
@@ -276,12 +352,14 @@ export default function Dashboard({ books }) {
             </div>
           </div>
 
-          {/* Gráfico 3: Linha - Concluídos por Mês em 2026 */}
+          {/* Gráfico 3: Linha - Concluídos por Mês */}
           <div className="card bg-base-200 border border-base-300 shadow-xl rounded-3xl p-5 hover:border-accent/20 transition-all duration-300">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-md font-bold text-white">Conclusões por Mês (2026)</h3>
-                <p className="text-2xs text-gray-400">Total de leituras finalizadas no ano</p>
+                <h3 className="text-md font-bold text-white">
+                  Conclusões por Mês ({selectedYear === 'todos' ? 'Todos os Anos' : selectedYear})
+                </h3>
+                <p className="text-2xs text-gray-400">Total de leituras finalizadas no período selecionado</p>
               </div>
               <Calendar className="h-5 w-5 text-gray-400" />
             </div>

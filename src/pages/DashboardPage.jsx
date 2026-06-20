@@ -14,7 +14,7 @@ export default function DashboardPage() {
           <BarChart3 className="h-6 w-6 text-primary" /> Painel de Estatísticas
         </h2>
         <p className="text-xs text-gray-400 mt-1">
-          Acompanhe seu progresso de páginas lidas, metas de leitura para o ano de 2026 e a distribuição da sua estante.
+          Acompanhe seu progresso de páginas lidas, metas de leitura por período e a distribuição da sua estante.
         </p>
       </div>
 

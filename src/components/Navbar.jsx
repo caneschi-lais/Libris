@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import logo from '../assets/logo3.png';
 
 /**
  * Componente Navbar global para o Libris.
@@ -12,9 +12,7 @@ export default function Navbar() {
       {/* Logotipo do Libris */}
       <div className="flex-1 flex items-center gap-3">
         <NavLink to="/dashboard" className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-tr from-primary to-secondary rounded-xl text-white shadow-lg">
-            <BookOpen className="h-6 w-6" />
-          </div>
+          <img src={logo} alt="Libris Logo" width={60} height={60} className="rounded-lg object-contain" />
           <div>
             <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
               Libris <span className="badge badge-accent badge-xs font-semibold py-1.5 px-2">v1.0</span>
@@ -28,21 +26,19 @@ export default function Navbar() {
       <div className="flex-none">
         <ul className="menu menu-horizontal px-1 gap-2">
           <li>
-            <NavLink 
-              to="/dashboard" 
-              className={({ isActive }) => `font-semibold text-xs md:text-sm px-4 py-2.5 rounded-xl transition-all ${
-                isActive ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-base-300'
-              }`}
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) => `font-semibold text-xs md:text-sm px-4 py-2.5 rounded-xl transition-all ${isActive ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-base-300'
+                }`}
             >
               📊 Dashboard
             </NavLink>
           </li>
           <li>
-            <NavLink 
-              to="/estante" 
-              className={({ isActive }) => `font-semibold text-xs md:text-sm px-4 py-2.5 rounded-xl transition-all ${
-                isActive ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-base-300'
-              }`}
+            <NavLink
+              to="/estante"
+              className={({ isActive }) => `font-semibold text-xs md:text-sm px-4 py-2.5 rounded-xl transition-all ${isActive ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-base-300'
+                }`}
             >
               📚 Minha Estante
             </NavLink>
