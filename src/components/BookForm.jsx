@@ -10,7 +10,7 @@ import { Plus, Check, X, BookOpen, AlertCircle } from 'lucide-react';
  * @param {Function} props.onSubmit - Callback disparado ao submeter dados válidos
  * @param {Function} [props.onCancel] - Callback opcional para cancelar/fechar formulário
  */
-export default function BookForm({ livro, onSubmit, onCancel }) {
+export default function BookForm({ livro, onSubmit, onCancel, submitLabel }) {
   const isEditing = !!livro;
 
   // Estados dos campos do formulário
@@ -390,7 +390,7 @@ export default function BookForm({ livro, onSubmit, onCancel }) {
             className={`btn ${isEditing ? 'btn-success text-white' : 'btn-primary'} text-xs gap-1`}
           >
             {isEditing ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {isEditing ? 'Salvar Alterações' : 'Cadastrar Leituras'}
+            {submitLabel || (isEditing ? 'Salvar Alterações' : 'Cadastrar Leituras')}
           </button>
         </div>
       </form>

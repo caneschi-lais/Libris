@@ -34,6 +34,49 @@ export function useBooks() {
   }, [setBooks]);
 
   /**
+   * Adiciona múltiplos livros ao estado de uma vez só.
+   * 
+   * @param {Array<Object>} listaDeLivros - Lista de dados brutos de livros
+   * @returns {{ success: boolean, books?: Array<Object>, errors?: string[] }}
+   */
+  const adicionarLivros = useCallback((listaDeLivros) => {
+    try {
+      const novosLivros = [];
+      const errosAcumulados = [];
+
+      listaDeLivros.forEach((dadosLivro, index) => {
+        const novoLivro = criarLivro(dadosLivro);
+        const { valido, erros } = validarLivro(novoLivro);
+
+        if (!valido) {
+          errosAcumulados.push(`Item ${index + 1} (${dadosLivro.titulo || 'Sem título'}): ${erros.join(', ')}`);
+        } else {
+          novosLivros.push(novoLivro);
+        }
+      });
+
+      if (errosAcumulados.length > 0) {
+        return { success: false, errors: errosAcumulados };
+      }
+
+      setBooks((prevBooks) => [...prevBooks, ...novosLivros]);
+      return { success: true, books: novosLivros };
+    } catch (err) {
+      console.error("Erro ao adicionar livros em lote:", err);
+      return { success: false, errors: [err.message] };
+    }
+  }, [setBooks]);
+
+  /**
+   * Substitui a lista de livros atual por uma nova lista (restauração de backup).
+   * 
+   * @param {Array<Object>} novaLista - Lista completa de livros higienizados
+   */
+  const importarLivros = useCallback((novaLista) => {
+    setBooks(novaLista);
+  }, [setBooks]);
+
+  /**
    * Atualiza as informações de um livro existente.
    * 
    * @param {string} id - ID do livro a ser atualizado
@@ -153,6 +196,8 @@ export function useBooks() {
   return {
     books,
     adicionarLivro,
+    adicionarLivros,
+    importarLivros,
     atualizarLivro,
     removerLivro,
     buscarLivroPorId,

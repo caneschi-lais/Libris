@@ -37,23 +37,24 @@ export function useLocalStorage(key, initialValue) {
   // Retorna uma versão estável da função de atualização (semelhante ao useState)
   const setValue = useCallback((value) => {
     try {
-      // Permite que o novo valor seja uma função de callback (como o setState clássico)
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      
-      // Salva no estado
-      setStoredValue(valueToStore);
-      
-      // Salva no LocalStorage
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      setStoredValue((prevStoredValue) => {
+        // Permite que o novo valor seja uma função de callback (como o setState clássico)
+        const valueToStore = value instanceof Function ? value(prevStoredValue) : value;
         
-        // Disparar evento de armazenamento customizado para atualizar outras instâncias do hook na mesma janela
-        window.dispatchEvent(new Event('local-storage'));
-      }
+        // Salva no LocalStorage
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+          
+          // Disparar evento de armazenamento customizado para atualizar outras instâncias do hook na mesma janela
+          window.dispatchEvent(new Event('local-storage'));
+        }
+        
+        return valueToStore;
+      });
     } catch (error) {
       console.error(`Erro ao salvar chave "${key}" no LocalStorage:`, error);
     }
-  }, [key, storedValue]);
+  }, [key]);
 
   // Efeito para sincronizar caso o valor mude em outra aba/componente
   useEffect(() => {
