@@ -19,7 +19,7 @@ export default function Sobre() {
           </div>
           
           <div className="space-y-2">
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white">
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-base-content">
               Libris
             </h1>
             <p className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -61,7 +61,7 @@ export default function Sobre() {
           <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
             <ToggleLeft className="h-5 w-5" />
           </div>
-          <h3 className="text-sm font-bold text-white">Zero Redes Sociais</h3>
+          <h3 className="text-sm font-bold text-base-content">Zero Redes Sociais</h3>
           <p className="text-xs text-gray-400 leading-relaxed">Sem curtidas, feeds ou notificações barulhentas. Apenas você e seus livros.</p>
         </div>
 
@@ -69,7 +69,7 @@ export default function Sobre() {
           <div className="p-2.5 bg-secondary/10 rounded-xl text-secondary">
             <BarChart3 className="h-5 w-5" />
           </div>
-          <h3 className="text-sm font-bold text-white">Métricas Precisas</h3>
+          <h3 className="text-sm font-bold text-base-content">Métricas Precisas</h3>
           <p className="text-xs text-gray-400 leading-relaxed">Totalizadores de páginas lidas, tipos de mídias e metas de conclusão mensais.</p>
         </div>
 
@@ -77,8 +77,8 @@ export default function Sobre() {
           <div className="p-2.5 bg-accent/10 rounded-xl text-accent">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <h3 className="text-sm font-bold text-white">Privacidade Absoluta</h3>
-          <p className="text-xs text-gray-400 leading-relaxed">Seus dados são salvos inteiramente no navegador local, sem servidores externos.</p>
+          <h3 className="text-sm font-bold text-base-content">Privacidade Absoluta</h3>
+          <p className="text-xs text-gray-400 leading-relaxed">Seus dados são salvos inteiramente no seu banco de dados MongoDB local.</p>
         </div>
       </div>
 

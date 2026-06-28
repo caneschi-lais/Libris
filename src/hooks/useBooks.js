@@ -1,22 +1,41 @@
-import { useMemo, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { criarLivro, validarLivro } from '../models/book';
 
-const STORAGE_KEY = 'libris_books';
+const API_URL = 'http://localhost:5000/api';
 
 /**
- * Hook especializado para gerenciar o estado dos livros do Libris e expor métricas agregadas.
+ * Hook especializado para gerenciar o estado dos livros do Libris integrando com o backend MongoDB e expor métricas agregadas.
  */
 export function useBooks() {
-  const [books, setBooks] = useLocalStorage(STORAGE_KEY, []);
+  const [books, setBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carrega todos os livros do banco de dados na inicialização
+  useEffect(() => {
+    fetch(`${API_URL}/books`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Falha ao obter livros do servidor backend.');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setBooks(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("[Libris] Erro ao carregar livros do MongoDB:", err);
+        setIsLoading(false);
+      });
+  }, []);
 
   /**
-   * Adiciona um novo livro ao estado.
+   * Adiciona um novo livro ao banco de dados e sincroniza o estado.
    * 
    * @param {Object} dadosLivro - Dados brutos vindos do formulário
-   * @returns {{ success: boolean, book?: Object, errors?: string[] }}
+   * @returns {Promise<{ success: boolean, book?: Object, errors?: string[] }>}
    */
-  const adicionarLivro = useCallback((dadosLivro) => {
+  const adicionarLivro = useCallback(async (dadosLivro) => {
     try {
       const novoLivro = criarLivro(dadosLivro);
       const { valido, erros } = validarLivro(novoLivro);
@@ -25,21 +44,33 @@ export function useBooks() {
         return { success: false, errors: erros };
       }
 
-      setBooks((prevBooks) => [...prevBooks, novoLivro]);
-      return { success: true, book: novoLivro };
+      const response = await fetch(`${API_URL}/books`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novoLivro)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        return { success: false, errors: [errData.message || 'Erro ao salvar livro no MongoDB.'] };
+      }
+
+      const savedBook = await response.json();
+      setBooks((prevBooks) => [...prevBooks, savedBook]);
+      return { success: true, book: savedBook };
     } catch (err) {
       console.error("Erro ao adicionar livro:", err);
       return { success: false, errors: [err.message] };
     }
-  }, [setBooks]);
+  }, []);
 
   /**
-   * Adiciona múltiplos livros ao estado de uma vez só.
+   * Adiciona múltiplos livros ao banco de dados e sincroniza o estado.
    * 
    * @param {Array<Object>} listaDeLivros - Lista de dados brutos de livros
-   * @returns {{ success: boolean, books?: Array<Object>, errors?: string[] }}
+   * @returns {Promise<{ success: boolean, books?: Array<Object>, errors?: string[] }>}
    */
-  const adicionarLivros = useCallback((listaDeLivros) => {
+  const adicionarLivros = useCallback(async (listaDeLivros) => {
     try {
       const novosLivros = [];
       const errosAcumulados = [];
@@ -59,69 +90,133 @@ export function useBooks() {
         return { success: false, errors: errosAcumulados };
       }
 
-      setBooks((prevBooks) => [...prevBooks, ...novosLivros]);
-      return { success: true, books: novosLivros };
+      const response = await fetch(`${API_URL}/books`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novosLivros)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        return { success: false, errors: [errData.message || 'Erro ao salvar lote no MongoDB.'] };
+      }
+
+      const savedBooks = await response.json();
+      setBooks((prevBooks) => [...prevBooks, ...savedBooks]);
+      return { success: true, books: savedBooks };
     } catch (err) {
       console.error("Erro ao adicionar livros em lote:", err);
       return { success: false, errors: [err.message] };
     }
-  }, [setBooks]);
+  }, []);
 
   /**
-   * Substitui a lista de livros atual por uma nova lista (restauração de backup).
+   * Importa a lista completa de livros no banco de dados, limpando dados antigos (restauração de backup).
    * 
-   * @param {Array<Object>} novaLista - Lista completa de livros higienizados
+   * @param {Array<Object>} novaLista - Lista completa de livros a importar
    */
-  const importarLivros = useCallback((novaLista) => {
-    setBooks(novaLista);
-  }, [setBooks]);
+  const importarLivros = useCallback(async (novaLista) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_URL}/books/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novaLista)
+      });
 
-  /**
-   * Atualiza as informações de um livro existente.
-   * 
-   * @param {string} id - ID do livro a ser atualizado
-   * @param {Object} novosDados - Dados a serem atualizados/mesclados
-   * @returns {{ success: boolean, book?: Object, errors?: string[] }}
-   */
-  const atualizarLivro = useCallback((id, novosDados) => {
-    let resultado = { success: false, errors: ['Livro não encontrado.'] };
-
-    setBooks((prevBooks) => {
-      const index = prevBooks.findIndex((b) => b.id === id);
-      if (index === -1) return prevBooks;
-
-      const livroExistente = prevBooks[index];
-      // Mescla os dados mantendo o ID
-      const livroMesclado = criarLivro({ ...livroExistente, ...novosDados, id });
-      const { valido, erros } = validarLivro(livroMesclado);
-
-      if (!valido) {
-        resultado = { success: false, errors: erros };
-        return prevBooks;
+      if (!response.ok) {
+        let message = `Erro ${response.status}: ${response.statusText}`;
+        try {
+          const errData = await response.json();
+          message = errData.message || message;
+        } catch (e) {
+          try {
+            const text = await response.text();
+            if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+              message = text;
+            }
+          } catch (eText) {
+            console.error("Falha ao ler corpo do erro como texto:", eText);
+          }
+        }
+        alert('Erro ao importar backup no servidor: ' + message);
+        setIsLoading(false);
+        return;
       }
 
-      const novosLivros = [...prevBooks];
-      novosLivros[index] = livroMesclado;
-      resultado = { success: true, book: livroMesclado };
-      return novosLivros;
-    });
-
-    return resultado;
-  }, [setBooks]);
+      const imported = await response.json();
+      setBooks(imported);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Erro ao importar backup:", err);
+      alert("Erro de conexão ao enviar backup para o servidor: " + err.message);
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
-   * Remove um livro da lista por ID.
+   * Atualiza as informações de um livro existente no banco de dados.
    * 
-   * @param {string} id - ID do livro a ser removido
+   * @param {number} id - ID numérico do livro a ser atualizado
+   * @param {Object} novosDados - Dados a serem atualizados
+   * @returns {Promise<{ success: boolean, book?: Object, errors?: string[] }>}
    */
-  const removerLivro = useCallback((id) => {
-    setBooks((prevBooks) => prevBooks.filter((b) => b.id !== id));
-  }, [setBooks]);
+  const atualizarLivro = useCallback(async (id, novosDados) => {
+    try {
+      const response = await fetch(`${API_URL}/books/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novosDados)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        return { success: false, errors: [errData.message || 'Erro ao atualizar livro no MongoDB.'] };
+      }
+
+      const updatedBook = await response.json();
+      setBooks((prevBooks) => {
+        const index = prevBooks.findIndex((b) => b.id === id);
+        if (index === -1) return prevBooks;
+        const novosLivros = [...prevBooks];
+        novosLivros[index] = updatedBook;
+        return novosLivros;
+      });
+
+      return { success: true, book: updatedBook };
+    } catch (err) {
+      console.error("Erro ao atualizar livro:", err);
+      return { success: false, errors: [err.message] };
+    }
+  }, []);
 
   /**
-   * Busca um livro pelo ID.
+   * Remove um livro da lista por ID de negócio numérico.
    * 
-   * @param {string} id - ID do livro
+   * @param {number} id - ID do livro a ser removido
+   */
+  const removerLivro = useCallback(async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/books/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        console.error("Erro ao deletar livro do servidor:", errData.message);
+        return;
+      }
+
+      setBooks((prevBooks) => prevBooks.filter((b) => b.id !== id));
+    } catch (err) {
+      console.error("Erro ao remover livro:", err);
+    }
+  }, []);
+
+  /**
+   * Busca um livro pelo ID de negócio numérico.
+   * 
+   * @param {number} id - ID numérico do livro
    * @returns {Object|undefined} O livro encontrado
    */
   const buscarLivroPorId = useCallback((id) => {
@@ -129,7 +224,7 @@ export function useBooks() {
   }, [books]);
 
   /**
-   * Métricas calculadas em tempo real com memoização para evitar re-computações desnecessárias.
+   * Métricas calculadas em tempo real a partir da estante local sincronizada.
    */
   const metrics = useMemo(() => {
     const totalLivros = books.length;
@@ -201,6 +296,7 @@ export function useBooks() {
     atualizarLivro,
     removerLivro,
     buscarLivroPorId,
-    metrics
+    metrics,
+    isLoading
   };
 }

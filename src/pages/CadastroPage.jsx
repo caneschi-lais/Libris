@@ -15,9 +15,9 @@ export default function CadastroPage() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [errosLote, setErrosLote] = useState([]);
 
-  const handleSubmit = (dadosForm) => {
+  const handleSubmit = async (dadosForm) => {
     if (modo === 'individual') {
-      const resultado = adicionarLivro(dadosForm);
+      const resultado = await adicionarLivro(dadosForm);
       if (resultado.success) {
         navigate('/estante');
       }
@@ -44,12 +44,12 @@ export default function CadastroPage() {
     setFila((prev) => prev.filter((_, idx) => idx !== idxRemover));
   };
 
-  const handleSalvarTodos = () => {
+  const handleSalvarTodos = async () => {
     if (fila.length === 0) return;
 
     // eslint-disable-next-line no-unused-vars
     const livrosParaSalvar = fila.map(({ tempId, ...rest }) => rest);
-    const resultado = adicionarLivros(livrosParaSalvar);
+    const resultado = await adicionarLivros(livrosParaSalvar);
 
     if (!resultado.success) {
       setErrosLote(resultado.errors);
@@ -64,7 +64,7 @@ export default function CadastroPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-base-300 pb-4">
         <Link 
           to="/estante" 
-          className="btn btn-ghost btn-sm text-gray-400 hover:text-white font-medium px-2 normal-case w-fit"
+          className="btn btn-ghost btn-sm text-base-content/60 hover:text-base-content font-medium px-2 normal-case w-fit"
         >
           ← Voltar para a Estante
         </Link>
@@ -121,7 +121,7 @@ export default function CadastroPage() {
 
             <div className="flex items-center gap-2 mb-6 text-primary">
               <PlusCircle className="h-6 w-6" />
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-base-content">
                 {modo === 'lote' ? 'Adicionar à Fila' : 'Adicionar Livro / Mídia'}
               </h2>
             </div>
@@ -145,7 +145,7 @@ export default function CadastroPage() {
                 <div className="flex justify-between items-center mb-6 pb-3 border-b border-base-300">
                   <div className="flex items-center gap-2">
                     <ListPlus className="h-5 w-5 text-secondary" />
-                    <h3 className="text-lg font-bold text-white">Fila de Leituras</h3>
+                    <h3 className="text-lg font-bold text-base-content">Fila de Leituras</h3>
                     <span className="badge badge-secondary font-bold text-xs">{fila.length}</span>
                   </div>
                   {fila.length > 0 && (
@@ -162,7 +162,7 @@ export default function CadastroPage() {
                 {fila.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center text-gray-500 border-2 border-dashed border-base-300 rounded-2xl bg-base-300/10">
                     <BookOpen className="h-12 w-12 mb-3 opacity-40 text-primary animate-pulse" />
-                    <p className="text-sm font-semibold text-gray-300">A fila está vazia</p>
+                    <p className="text-sm font-semibold text-base-content/85">A fila está vazia</p>
                     <p className="text-xs max-w-xs px-4 mt-1">Preencha os dados do formulário ao lado e clique no botão para incluir na fila.</p>
                   </div>
                 ) : (
@@ -180,7 +180,7 @@ export default function CadastroPage() {
                         {fila.map((livro, idx) => (
                           <tr key={livro.tempId || idx} className="hover:bg-base-300/20 border-b border-base-300/40">
                             <td className="pl-0 max-w-[200px] py-3">
-                              <span className="font-semibold text-white block truncate" title={livro.titulo}>{livro.titulo}</span>
+                              <span className="font-semibold text-base-content block truncate" title={livro.titulo}>{livro.titulo}</span>
                               <span className="text-[10px] text-gray-400 block truncate" title={livro.autor}>{livro.autor}</span>
                             </td>
                             <td className="py-3">

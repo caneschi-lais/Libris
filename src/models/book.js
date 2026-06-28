@@ -1,12 +1,10 @@
-import { v4 as uuidv4 } from 'uuid';
-
 /**
  * @typedef {'Livro' | 'HQ' | 'Mangá' | 'Audiobook'} TipoMidia
  * @typedef {'Não Lido' | 'Lendo' | 'Lido'} StatusLeitura
  * @typedef {'Físico' | 'Digital'} FormatoLivro
  * 
  * @typedef {Object} Livro
- * @property {string} id - Identificador único (UUID)
+ * @property {number} [id] - Identificador único incremental (definido pelo servidor)
  * @property {string} titulo - Título da obra
  * @property {string} autor - Autor da obra
  * @property {TipoMidia} tipo_midia - Tipo de mídia do livro
@@ -37,7 +35,7 @@ export function criarLivro(dados = {}) {
   const eColecao = !!dados.e_colecao;
 
   return {
-    id: dados.id || uuidv4(),
+    id: dados.id !== undefined && dados.id !== null ? Number(dados.id) : undefined,
     titulo: (dados.titulo || '').trim(),
     autor: (dados.autor || '').trim(),
     tipo_midia: TIPOS_MIDIA.includes(dados.tipo_midia) ? dados.tipo_midia : 'Livro',
@@ -113,3 +111,6 @@ export function validarLivro(livro) {
     erros
   };
 }
+
+// Removidos métodos de compressão/descompressão do IndexedDB
+

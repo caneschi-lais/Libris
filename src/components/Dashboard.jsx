@@ -178,7 +178,7 @@ export default function Dashboard({ books }) {
       {/* Filtro de Ano */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-200 p-5 border border-base-300 rounded-3xl shadow-xl">
         <div>
-          <h3 className="text-md font-bold text-white flex items-center gap-2">
+          <h3 className="text-md font-bold text-base-content flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" /> Filtro de Ano
           </h3>
           <p className="text-xs text-gray-400 mt-0.5">
@@ -190,7 +190,7 @@ export default function Dashboard({ books }) {
             id="year-select"
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="select select-bordered select-sm w-full sm:w-44 bg-base-100 text-sm focus:border-primary text-white font-medium"
+            className="select select-bordered select-sm w-full sm:w-44 bg-base-100 text-sm focus:border-primary text-base-content font-medium"
           >
             <option value="todos">Todos os Anos</option>
             {uniqueYears.map((year) => (
@@ -211,7 +211,7 @@ export default function Dashboard({ books }) {
             <Layers className="h-8 w-8 opacity-75" />
           </div>
           <div className="stat-title text-gray-400 font-semibold text-sm">Total de Livros</div>
-          <div className="stat-value text-3xl font-extrabold text-white mt-1">{stats.totalLivros}</div>
+          <div className="stat-value text-3xl font-extrabold text-base-content mt-1">{stats.totalLivros}</div>
           <div className="stat-desc text-xs text-gray-500 mt-1">
             {selectedYear === 'todos' ? 'Registrados na sua estante' : `Ativos em ${selectedYear}`}
           </div>
@@ -223,7 +223,7 @@ export default function Dashboard({ books }) {
             <BookOpenCheck className="h-8 w-8 opacity-75" />
           </div>
           <div className="stat-title text-gray-400 font-semibold text-sm">Concluídos (Lidos)</div>
-          <div className="stat-value text-3xl font-extrabold text-white mt-1">{stats.livrosLidos}</div>
+          <div className="stat-value text-3xl font-extrabold text-base-content mt-1">{stats.livrosLidos}</div>
           <div className="stat-desc text-xs text-gray-500 mt-1">
             {stats.totalLivros > 0 
               ? `${Math.round((stats.livrosLidos / stats.totalLivros) * 100)}% de taxa de conclusão` 
@@ -237,7 +237,7 @@ export default function Dashboard({ books }) {
             <Award className="h-8 w-8 opacity-75" />
           </div>
           <div className="stat-title text-gray-400 font-semibold text-sm">Páginas Lidas</div>
-          <div className="stat-value text-3xl font-extrabold text-white mt-1">{stats.totalPaginasLidas}</div>
+          <div className="stat-value text-3xl font-extrabold text-base-content mt-1">{stats.totalPaginasLidas}</div>
           <div className="stat-desc text-xs text-gray-500 mt-1">
             {selectedYear === 'todos' ? 'Soma de Lidos + Lendo atualmente' : `Lidos + Lendo em ${selectedYear}`}
           </div>
@@ -252,7 +252,7 @@ export default function Dashboard({ books }) {
             <div className="p-4 bg-base-300 rounded-full text-gray-500 mb-4">
               <BookOpen className="h-12 w-12" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Seu Dashboard está pronto!</h3>
+            <h3 className="text-xl font-bold text-base-content mb-2">Seu Dashboard está pronto!</h3>
             <p className="text-sm text-gray-400">
               Cadastre livros ou HQs na aba <strong>Estante</strong> com diferentes status e mídias para gerar os gráficos de métricas automaticamente aqui.
             </p>
@@ -266,7 +266,7 @@ export default function Dashboard({ books }) {
           <div className="card bg-base-200 border border-base-300 shadow-xl rounded-3xl p-5 hover:border-primary/20 transition-all duration-300">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-md font-bold text-white">Distribuição de Posse</h3>
+                <h3 className="text-md font-bold text-base-content">Distribuição de Posse</h3>
                 <p className="text-2xs text-gray-400">Físicos, Digitais e Desejados na Estante</p>
               </div>
               <ShoppingBag className="h-5 w-5 text-gray-400" />
@@ -308,7 +308,7 @@ export default function Dashboard({ books }) {
           <div className="card bg-base-200 border border-base-300 shadow-xl rounded-3xl p-5 hover:border-secondary/20 transition-all duration-300">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-md font-bold text-white">Mídias na Estante</h3>
+                <h3 className="text-md font-bold text-base-content">Mídias na Estante</h3>
                 <p className="text-2xs text-gray-400">Total de mídias por tipo cadastrado</p>
               </div>
               <Layers className="h-5 w-5 text-gray-400" />
@@ -356,7 +356,7 @@ export default function Dashboard({ books }) {
           <div className="card bg-base-200 border border-base-300 shadow-xl rounded-3xl p-5 hover:border-accent/20 transition-all duration-300">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-md font-bold text-white">
+                <h3 className="text-md font-bold text-base-content">
                   Conclusões por Mês ({selectedYear === 'todos' ? 'Todos os Anos' : selectedYear})
                 </h3>
                 <p className="text-2xs text-gray-400">Total de leituras finalizadas no período selecionado</p>

@@ -135,7 +135,7 @@ export default function BookForm({ livro, onSubmit, onCancel, submitLabel }) {
     <div className="w-full">
       {/* Cabeçalho de status do form */}
       <div className="mb-4">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-primary" />
           {isEditing ? `Editar: ${livro.titulo}` : 'Cadastrar Novo Livro / Mídia'}
         </h3>

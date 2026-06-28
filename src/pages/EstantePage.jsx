@@ -11,7 +11,8 @@ export default function EstantePage() {
     books, 
     atualizarLivro, 
     removerLivro,
-    importarLivros
+    importarLivros,
+    isLoading
   } = useBooksContext();
 
   // Estado local para controle do modal de edição
@@ -119,27 +120,27 @@ export default function EstantePage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Cabeçalho da Estante */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-base-300 pb-4 gap-4">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-white flex items-center gap-2">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-base-content flex items-center gap-2">
           <Bookmark className="h-7 w-7 text-primary" /> Minha Estante
         </h2>
         
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
           {/* Dropdown de Backup */}
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-outline btn-sm md:btn-md font-semibold text-gray-300 border-base-300">
+            <div tabIndex={0} role="button" className="btn btn-outline btn-sm md:btn-md font-semibold text-base-content/80 border-base-300">
               Backup
             </div>
             <ul tabIndex={0} className="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-200 border border-base-300 rounded-2xl w-52 mt-1 space-y-1">
               <li>
                 <button 
                   onClick={handleExportarBackup} 
-                  className="text-xs font-semibold py-2.5 flex items-center gap-2 text-white hover:bg-base-300"
+                  className="text-xs font-semibold py-2.5 flex items-center gap-2 text-base-content hover:bg-base-300"
                 >
                   <Download className="h-4 w-4 text-primary" /> Exportar JSON
                 </button>
               </li>
               <li>
-                <label className="text-xs font-semibold py-2.5 flex items-center gap-2 text-white hover:bg-base-300 cursor-pointer">
+                <label className="text-xs font-semibold py-2.5 flex items-center gap-2 text-base-content hover:bg-base-300 cursor-pointer">
                   <Upload className="h-4 w-4 text-secondary" /> Importar JSON
                   <input 
                     type="file" 
@@ -162,13 +163,20 @@ export default function EstantePage() {
         </div>
       </div>
 
-      {/* Tabela de Listagem */}
-      <BookTable
-        books={books}
-        onEdit={setLivroEmEdicao}
-        onDelete={removerLivro}
-        onIncrementPage={handleIncrementPage}
-      />
+      {/* Tabela de Listagem / Estado de Carregamento */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32 space-y-4 bg-base-200 border border-base-300 rounded-3xl shadow-xl">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="text-sm text-gray-400 font-semibold animate-pulse">Carregando estante de livros...</p>
+        </div>
+      ) : (
+        <BookTable
+          books={books}
+          onEdit={setLivroEmEdicao}
+          onDelete={removerLivro}
+          onIncrementPage={handleIncrementPage}
+        />
+      )}
 
       {/* Modal de Edição In-Place */}
       {livroEmEdicao && (
@@ -183,8 +191,8 @@ export default function EstantePage() {
             <BookForm
               livro={livroEmEdicao}
               onCancel={() => setLivroEmEdicao(null)}
-              onSubmit={(novosDados) => {
-                const resultado = atualizarLivro(livroEmEdicao.id, novosDados);
+              onSubmit={async (novosDados) => {
+                const resultado = await atualizarLivro(livroEmEdicao.id, novosDados);
                 if (resultado.success) {
                   setLivroEmEdicao(null);
                 }

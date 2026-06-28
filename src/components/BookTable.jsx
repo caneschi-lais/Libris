@@ -26,31 +26,19 @@ import {
  * @param {Function} props.onIncrementPage - Callback para incrementar progresso de leitura
  */
 export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) {
-  // Estados de busca e filtros rápidos
+  // Estados de busca e filtros avançados
   const [buscaTextual, setBuscaTextual] = useState('');
-  const [filtroRapido, setFiltroRapido] = useState('todos'); // 'todos' | 'hqs' | 'fisicos_nao_lidos' | 'desejos'
-  
-  // Estados de ordenação
+  const [filtroMidia, setFiltroMidia] = useState('todos'); // 'todos' | 'Livro' | 'HQ' | 'Mangá' | 'Audiobook'
+  const [filtroStatus, setFiltroStatus] = useState('todos'); // 'todos' | 'Lido' | 'Lendo' | 'Não Lido'
+  const [filtroPosse, setFiltroPosse] = useState('todos'); // 'todos' | 'tenho' | 'quero'
   const [sortKey, setSortKey] = useState('titulo-asc');
-  
-  // Estados de paginação
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; // 8 itens por página para desktop
 
-  // Reset de paginação ao filtrar ou buscar
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [buscaTextual, filtroRapido]);
-
-  // Manipulador de mudança de filtro rápido
-  const handleFiltroClick = (filtro) => {
-    setFiltroRapido(filtro);
-  };
-
-  // Filtragem combinada em tempo real (Busca + Filtro Rápido)
+  // 1. Filtragem combinada em tempo real (Busca + Filtros Avançados)
   const filteredBooks = useMemo(() => {
     return books.filter((livro) => {
-      // 1. Filtro de Busca Textual (Título, Autor ou Coleção)
+      // Filtro de Busca Textual (Título, Autor ou Coleção)
       const query = buscaTextual.toLowerCase().trim();
       const bateBusca = !query ||
         livro.titulo.toLowerCase().includes(query) ||
@@ -59,25 +47,27 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
 
       if (!bateBusca) return false;
 
-      // 2. Filtro Rápido
-      switch (filtroRapido) {
-        case 'hqs':
-          // Apenas HQs (tipo_midia for HQ ou Mangá)
-          return livro.tipo_midia === 'HQ' || livro.tipo_midia === 'Mangá';
-        case 'fisicos_nao_lidos':
-          // Livros Físicos Não Lidos (formato for Físico e status_leitura for Não Lido)
-          return livro.possui_o_livro && livro.formato === 'Físico' && livro.status_leitura === 'Não Lido';
-        case 'desejos':
-          // Lista de Desejos (possui_o_livro for false)
-          return !livro.possui_o_livro;
-        case 'todos':
-        default:
-          return true;
+      // Filtro de Mídia
+      if (filtroMidia !== 'todos' && livro.tipo_midia !== filtroMidia) {
+        return false;
       }
-    });
-  }, [books, buscaTextual, filtroRapido]);
 
-  // Ordenação reativa
+      // Filtro de Status de Leitura
+      if (filtroStatus !== 'todos' && livro.status_leitura !== filtroStatus) {
+        return false;
+      }
+
+      // Filtro de Posse
+      if (filtroPosse !== 'todos') {
+        if (filtroPosse === 'tenho' && !livro.possui_o_livro) return false;
+        if (filtroPosse === 'quero' && livro.possui_o_livro) return false;
+      }
+
+      return true;
+    });
+  }, [books, buscaTextual, filtroMidia, filtroStatus, filtroPosse]);
+
+  // 2. Ordenação reativa
   const sortedBooks = useMemo(() => {
     const booksToSort = [...filteredBooks];
     return booksToSort.sort((a, b) => {
@@ -103,14 +93,72 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
     });
   }, [filteredBooks, sortKey]);
 
-  // Total de páginas para paginação
+  // 3. Total de páginas para paginação
   const totalPages = Math.ceil(sortedBooks.length / itemsPerPage);
 
-  // Dados paginados finais a serem renderizados
+  // 4. Reset de paginação ao filtrar, buscar ou reordenar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [buscaTextual, filtroMidia, filtroStatus, filtroPosse, sortKey]);
+
+  // 5. Garante que a página atual esteja sempre dentro dos limites válidos
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  // 6. Dados paginados finais a serem renderizados
   const paginatedBooks = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sortedBooks.slice(startIndex, startIndex + itemsPerPage);
   }, [sortedBooks, currentPage, itemsPerPage]);
+
+  // 7. Função para gerar os números de páginas visíveis (design premium)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Sempre inclui a primeira página
+      pages.push(1);
+
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+
+      if (currentPage <= 2) {
+        end = 3;
+      } else if (currentPage >= totalPages - 1) {
+        start = totalPages - 2;
+      }
+
+      if (start > 2) {
+        pages.push('...');
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+
+      // Sempre inclui a última página
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  // 8. Manipulador de mudança de filtro rápido
+  const handleFiltroClick = (filtro) => {
+    setFiltroRapido(filtro);
+  };
 
   // Função para retornar o ícone da mídia
   const getMediaIcon = (tipo) => {
@@ -161,36 +209,52 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
           </select>
         </div>
 
-        {/* Grupo de Filtros Rápidos (btn-group / join do DaisyUI) */}
-        <div className="join self-start xl:self-auto shadow-sm">
-          <button
-            onClick={() => handleFiltroClick('todos')}
-            className={`join-item btn btn-xs md:btn-sm font-semibold border-base-300 ${filtroRapido === 'todos' ? 'btn-primary text-white' : 'bg-base-100 text-gray-400 hover:text-white'
-              }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => handleFiltroClick('hqs')}
-            className={`join-item btn btn-xs md:btn-sm font-semibold border-base-300 ${filtroRapido === 'hqs' ? 'btn-secondary text-white' : 'bg-base-100 text-gray-400 hover:text-white'
-              }`}
-          >
-            Apenas HQs
-          </button>
-          <button
-            onClick={() => handleFiltroClick('fisicos_nao_lidos')}
-            className={`join-item btn btn-xs md:btn-sm font-semibold border-base-300 ${filtroRapido === 'fisicos_nao_lidos' ? 'btn-accent text-white' : 'bg-base-100 text-gray-400 hover:text-white'
-              }`}
-          >
-            Físicos Não Lidos
-          </button>
-          <button
-            onClick={() => handleFiltroClick('desejos')}
-            className={`join-item btn btn-xs md:btn-sm font-semibold border-base-300 ${filtroRapido === 'desejos' ? 'btn-warning text-white' : 'bg-base-100 text-gray-400 hover:text-white'
-              }`}
-          >
-            Lista de Desejos
-          </button>
+        {/* Grupo de Filtros Selects */}
+        <div className="flex flex-wrap gap-2.5 items-center self-start xl:self-auto w-full xl:w-auto justify-start xl:justify-end">
+          {/* Filtro 1: Tipo de Mídia */}
+          <div className="form-control">
+            <select
+              value={filtroMidia}
+              onChange={(e) => setFiltroMidia(e.target.value)}
+              className="select select-bordered select-xs md:select-sm bg-base-100 text-2xs md:text-xs font-semibold text-base-content focus:border-primary"
+              title="Filtrar por Mídia"
+            >
+              <option value="todos">📺 Mídia: Todos</option>
+              <option value="Livro">📖 Livro</option>
+              <option value="HQ">🎨 HQ</option>
+              <option value="Mangá">🌸 Mangá</option>
+              <option value="Audiobook">🎧 Audiobook</option>
+            </select>
+          </div>
+
+          {/* Filtro 2: Progresso de Leitura */}
+          <div className="form-control">
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="select select-bordered select-xs md:select-sm bg-base-100 text-2xs md:text-xs font-semibold text-base-content focus:border-primary"
+              title="Filtrar por Leitura"
+            >
+              <option value="todos">📈 Leitura: Todos</option>
+              <option value="Não Lido">⚪ Não Lido</option>
+              <option value="Lendo">🟡 Lendo</option>
+              <option value="Lido">🟢 Lido</option>
+            </select>
+          </div>
+
+          {/* Filtro 3: Posse */}
+          <div className="form-control">
+            <select
+              value={filtroPosse}
+              onChange={(e) => setFiltroPosse(e.target.value)}
+              className="select select-bordered select-xs md:select-sm bg-base-100 text-2xs md:text-xs font-semibold text-base-content focus:border-primary"
+              title="Filtrar por Posse"
+            >
+              <option value="todos">📦 Posse: Todos</option>
+              <option value="tenho">💙 Tenho o Livro</option>
+              <option value="quero">💛 Quero (Desejos)</option>
+            </select>
+          </div>
         </div>
 
       </div>
@@ -204,7 +268,7 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
               <div className="p-4 bg-base-300 rounded-full text-gray-500 mb-4">
                 <Inbox className="h-10 w-10" />
               </div>
-              <h4 className="text-md font-bold text-white mb-1">Nenhum registro encontrado</h4>
+              <h4 className="text-md font-bold text-base-content mb-1">Nenhum registro encontrado</h4>
               <p className="text-xs text-gray-400">
                 Nenhum livro corresponde à sua busca ou filtro atual na estante do Libris.
               </p>
@@ -212,7 +276,7 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
           ) : (
             <table className="table table-md w-full text-left">
               {/* Cabeçalho */}
-              <thead className="bg-base-300/40 text-gray-300 sticky top-0 z-10 border-b border-base-300">
+              <thead className="bg-base-300/40 text-base-content/70 sticky top-0 z-10 border-b border-base-300">
                 <tr>
                   <th className="font-bold py-4">Título</th>
                   <th className="font-bold py-4">Autor</th>
@@ -250,18 +314,18 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
                   return (
                     <tr key={livro.id} className="hover:bg-base-300/20 transition-colors">
                       {/* Título */}
-                      <td className="font-semibold text-white max-w-[200px] truncate py-4">
+                      <td className="font-semibold text-base-content max-w-[200px] truncate py-4">
                         {livro.titulo}
                       </td>
 
                       {/* Autor */}
-                      <td className="text-gray-300 max-w-[150px] truncate py-4">
+                      <td className="text-base-content/80 max-w-[150px] truncate py-4">
                         {livro.autor}
                       </td>
 
                       {/* Tipo de Mídia */}
                       <td className="py-4">
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-300">
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-base-content/80">
                           {getMediaIcon(livro.tipo_midia)}
                           {livro.tipo_midia}
                         </span>
@@ -282,7 +346,7 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
                       </td>
 
                       {/* Volume */}
-                      <td className="py-4 text-xs font-semibold text-gray-300">
+                      <td className="py-4 text-xs font-semibold text-base-content/80">
                         {livro.e_colecao && livro.volume_colecao ? (
                           <span>{livro.volume_colecao}</span>
                         ) : (
@@ -307,7 +371,7 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
                       {/* Progresso */}
                       <td className="py-4">
                         <div className="flex flex-col gap-1 w-full max-w-[220px]">
-                          <span className="text-2xs font-bold text-gray-300">{progressoTexto}</span>
+                          <span className="text-2xs font-bold text-base-content/80">{progressoTexto}</span>
                           <progress
                             className={`progress w-full h-2.5 ${progressClass}`}
                             value={livro.status_leitura === 'Lido' ? 100 : percentual}
@@ -377,21 +441,47 @@ export default function BookTable({ books, onEdit, onDelete, onIncrementPage }) 
         {/* Painel de Paginação do DaisyUI */}
         {totalPages > 1 && (
           <div className="flex justify-center p-4 bg-base-300/10 border-t border-base-300">
-            <div className="join">
+            <div className="join border border-base-300 rounded-xl overflow-hidden shadow-sm">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="join-item btn btn-xs md:btn-sm btn-outline text-gray-400 disabled:bg-transparent"
+                className="join-item btn btn-xs md:btn-sm bg-base-100 text-gray-400 border-none hover:text-white disabled:bg-transparent"
+                title="Página Anterior"
               >
                 «
               </button>
-              <button className="join-item btn btn-xs md:btn-sm bg-base-100 text-xs md:text-sm font-semibold pointer-events-none cursor-default">
-                Página {currentPage} de {totalPages}
-              </button>
+              
+              {getPageNumbers().map((page, idx) => {
+                if (page === '...') {
+                  return (
+                    <span 
+                      key={idx} 
+                      className="join-item btn btn-xs md:btn-sm btn-disabled bg-base-100 text-gray-500 border-none cursor-default"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentPage(page)}
+                    className={`join-item btn btn-xs md:btn-sm border-none font-semibold ${
+                      currentPage === page 
+                        ? 'btn-primary text-white' 
+                        : 'bg-base-100 text-gray-400 hover:text-white hover:bg-base-300/50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="join-item btn btn-xs md:btn-sm btn-outline text-gray-400 disabled:bg-transparent"
+                className="join-item btn btn-xs md:btn-sm bg-base-100 text-gray-400 border-none hover:text-white disabled:bg-transparent"
+                title="Próxima Página"
               >
                 »
               </button>

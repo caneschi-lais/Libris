@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { BooksProvider } from './context/BooksContext';
 import Sobre from './pages/Sobre';
@@ -14,6 +14,12 @@ import Navbar from './components/Navbar';
 function AppLayout() {
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
+
+  // Garante que o tema salvo seja aplicado mesmo ao carregar na landing page
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('libris-theme') || 'librisDark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">

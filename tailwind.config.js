@@ -25,7 +25,39 @@ export default {
           "error": "#f87272",
         },
       },
-      "light", // fallback/alternative theme
+      {
+        librisLight: {
+          "primary": "#4f46e5",     // Indigo-600
+          "secondary": "#9333ea",   // Purple-600
+          "accent": "#0d9488",      // Teal-600
+          "neutral": "#1f2937",     // Gray-800
+          "base-100": "#f8fafc",    // Slate-50 (pure light background)
+          "base-200": "#f1f5f9",    // Slate-100
+          "base-300": "#e2e8f0",    // Slate-200
+          "info": "#06b6d4",
+          "success": "#10b981",
+          "warning": "#f59e0b",
+          "error": "#ef4444",
+        },
+      },
+      "light",
+      "dark",
+      "cupcake",
+      "synthwave",
+      "retro",
+      "cyberpunk",
+      "valentine",
+      "halloween",
+      "forest",
+      "aqua",
+      "luxury",
+      "dracula",
+      "business",
+      "night",
+      "coffee",
+      "winter",
+      "sunset",
+      "nord"
     ],
   },
 }
