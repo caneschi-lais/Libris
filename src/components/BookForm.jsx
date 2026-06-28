@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { TIPOS_MIDIA, STATUS_LEITURA, FORMATOS } from '../models/book';
 import { Plus, Check, X, BookOpen, AlertCircle } from 'lucide-react';
+import MediaProgressFields from './MediaProgressFields';
+import CollectionFields from './CollectionFields';
 
 /**
  * Componente de Formulário para Cadastrar ou Editar um livro no Libris.
@@ -186,193 +187,35 @@ export default function BookForm({ livro, onSubmit, onCancel, submitLabel }) {
           />
         </div>
 
-        {/* Mídia e Status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control w-full">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-gray-300">Tipo de Mídia</span>
-            </label>
-            <select
-              value={tipoMidia}
-              onChange={(e) => setTipoMidia(e.target.value)}
-              className="select select-bordered w-full bg-base-100/50 text-sm"
-            >
-              {TIPOS_MIDIA.map((tipo) => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
-            </select>
-          </div>
+        {/* Mídia, Status e Progresso de Leitura */}
+        <MediaProgressFields
+          tipoMidia={tipoMidia}
+          setTipoMidia={setTipoMidia}
+          statusLeitura={statusLeitura}
+          setStatusLeitura={setStatusLeitura}
+          totalPaginas={totalPaginas}
+          setTotalPaginas={setTotalPaginas}
+          paginaAtual={paginaAtual}
+          setPaginaAtual={setPaginaAtual}
+          dataInicio={dataInicio}
+          setDataInicio={setDataInicio}
+          dataTermino={dataTermino}
+          setDataTermino={setDataTermino}
+        />
 
-          <div className="form-control w-full">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-gray-300">Status de Leitura</span>
-            </label>
-            <select
-              value={statusLeitura}
-              onChange={(e) => setStatusLeitura(e.target.value)}
-              className="select select-bordered w-full bg-base-100/50 text-sm"
-            >
-              {STATUS_LEITURA.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Páginas / Minutos (Baseado em tipo de mídia) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control w-full">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-gray-300">
-                {tipoMidia === 'Audiobook' ? 'Total de Minutos *' : 'Total de Páginas *'}
-              </span>
-            </label>
-            <input
-              type="number"
-              placeholder="Ex: 310"
-              value={totalPaginas}
-              onChange={(e) => setTotalPaginas(e.target.value)}
-              className="input input-bordered w-full bg-base-100/50 text-sm"
-              min="1"
-              required
-            />
-          </div>
-
-          {/* Exibição Condicional: Página Atual (Apenas se status for 'Lendo') */}
-          {statusLeitura === 'Lendo' && (
-            <div className="form-control w-full animate-fadeIn">
-              <label className="label py-1">
-                <span className="label-text font-semibold text-gray-300">
-                  {tipoMidia === 'Audiobook' ? 'Minuto Atual' : 'Página Atual'}
-                </span>
-              </label>
-              <input
-                type="number"
-                placeholder="Ex: 45"
-                value={paginaAtual}
-                onChange={(e) => setPaginaAtual(Number(e.target.value))}
-                className="input input-bordered w-full bg-base-100/50 text-sm"
-                min="0"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Exibição Condicional: Datas de Início e Término */}
-        {(statusLeitura === 'Lendo' || statusLeitura === 'Lido') && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn">
-            <div className="form-control w-full">
-              <label className="label py-1">
-                <span className="label-text font-semibold text-gray-300 text-xs">Data de Início</span>
-              </label>
-              <input
-                type="date"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
-                className="input input-bordered w-full bg-base-100/50 text-sm"
-              />
-            </div>
-
-            {/* Apenas se status for 'Lido' */}
-            {statusLeitura === 'Lido' && (
-              <div className="form-control w-full animate-fadeIn">
-                <label className="label py-1">
-                  <span className="label-text font-semibold text-gray-300 text-xs">Data de Término</span>
-                </label>
-                <input
-                  type="date"
-                  value={dataTermino}
-                  onChange={(e) => setDataTermino(e.target.value)}
-                  className="input input-bordered w-full bg-base-100/50 text-sm"
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Grid dos Toggles de Posse e Coleção */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          {/* Toggle: Possui o Livro */}
-          <div className="card bg-base-300/40 p-4 border border-base-300 rounded-2xl flex flex-col justify-between">
-            <div className="form-control">
-              <label className="label cursor-pointer justify-between p-0">
-                <span className="label-text font-semibold text-gray-300">Possui o livro?</span>
-                <input
-                  type="checkbox"
-                  checked={possuiLivro}
-                  onChange={(e) => setPossuiLivro(e.target.checked)}
-                  className="toggle toggle-primary toggle-sm"
-                />
-              </label>
-            </div>
-
-            {/* Exibição Condicional: Formato */}
-            {possuiLivro && (
-              <div className="form-control w-full mt-3 animate-fadeIn">
-                <label className="label py-0 pb-1">
-                  <span className="label-text text-gray-400 text-xs">Selecione o Formato</span>
-                </label>
-                <select
-                  value={formato}
-                  onChange={(e) => setFormato(e.target.value)}
-                  className="select select-bordered select-sm w-full bg-base-100"
-                >
-                  {FORMATOS.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Toggle: É Coleção? */}
-          <div className="card bg-base-300/40 p-4 border border-base-300 rounded-2xl flex flex-col justify-between">
-            <div className="form-control">
-              <label className="label cursor-pointer justify-between p-0">
-                <span className="label-text font-semibold text-gray-300">É uma coleção?</span>
-                <input
-                  type="checkbox"
-                  checked={eColecao}
-                  onChange={(e) => setEColecao(e.target.checked)}
-                  className="toggle toggle-secondary toggle-sm"
-                />
-              </label>
-            </div>
-
-            {/* Exibição Condicional: Detalhes de Coleção */}
-            {eColecao && (
-              <div className="grid grid-cols-2 gap-2 mt-3 animate-fadeIn">
-                <div className="form-control w-full">
-                  <label className="label py-0 pb-1">
-                    <span className="label-text text-gray-400 text-xs">Coleção *</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Nome"
-                    value={nomeColecao}
-                    onChange={(e) => setNomeColecao(e.target.value)}
-                    className="input input-bordered input-sm w-full bg-base-100 text-xs"
-                    required={eColecao}
-                  />
-                </div>
-                <div className="form-control w-full">
-                  <label className="label py-0 pb-1">
-                    <span className="label-text text-gray-400 text-xs">Volume / N°</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Vol. 1"
-                    value={volumeColecao}
-                    onChange={(e) => setVolumeColecao(e.target.value)}
-                    className="input input-bordered input-sm w-full bg-base-100 text-xs"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-        </div>
+        {/* Toggles de Posse e Coleção */}
+        <CollectionFields
+          possuiLivro={possuiLivro}
+          setPossuiLivro={setPossuiLivro}
+          formato={formato}
+          setFormato={setFormato}
+          eColecao={eColecao}
+          setEColecao={setEColecao}
+          nomeColecao={nomeColecao}
+          setNomeColecao={setNomeColecao}
+          volumeColecao={volumeColecao}
+          setVolumeColecao={setVolumeColecao}
+        />
 
         {/* Ações do Formulário */}
         <div className="flex gap-2 justify-end pt-2">
